@@ -1,12 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { WIDGET_IDS } from "@/lib/constants";
-
-declare global {
-  interface Window {
-    RealScout?: any;
-  }
-}
 
 type FilterOptions = {
   propertyType: string;
@@ -15,8 +9,71 @@ type FilterOptions = {
   bathrooms: string;
 };
 
+// Mock property data for demonstration
+const mockProperties = [
+  {
+    id: 1,
+    address: "123 Mountain View Drive",
+    price: 575000,
+    bedrooms: 4,
+    bathrooms: 3,
+    sqft: 2750,
+    type: "single",
+    image: "https://images.unsplash.com/photo-1592595896616-c37162298647?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 2,
+    address: "456 Canyon Ridge Lane",
+    price: 625000,
+    bedrooms: 5,
+    bathrooms: 3.5,
+    sqft: 3200,
+    type: "single",
+    image: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 3,
+    address: "789 Desert View Terrace",
+    price: 525000,
+    bedrooms: 3,
+    bathrooms: 2,
+    sqft: 2100,
+    type: "townhouse",
+    image: "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 4,
+    address: "321 Sunset Peak Court",
+    price: 725000,
+    bedrooms: 4,
+    bathrooms: 3.5,
+    sqft: 3600,
+    type: "single",
+    image: "https://images.unsplash.com/photo-1576941089067-2de3c901e126?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 5,
+    address: "555 Valley Vista Avenue",
+    price: 675000,
+    bedrooms: 4,
+    bathrooms: 3,
+    sqft: 3000,
+    type: "single",
+    image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 6,
+    address: "888 Sierra Circle",
+    price: 550000,
+    bedrooms: 3,
+    bathrooms: 2.5,
+    sqft: 2400,
+    type: "townhouse",
+    image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  }
+];
+
 export default function PropertiesSection() {
-  const realScoutInitialized = useRef(false);
   const [filters, setFilters] = useState<FilterOptions>({
     propertyType: "all",
     priceRange: "500000-600000",
@@ -24,38 +81,25 @@ export default function PropertiesSection() {
     bathrooms: "any"
   });
   
+  const [filteredProperties, setFilteredProperties] = useState(mockProperties);
+  
+  // Load RealScout script on component mount
   useEffect(() => {
-    // Only initialize RealScout if not already done
-    if (!realScoutInitialized.current) {
-      // Create RealScout container element
-      const container = document.getElementById('realscout-container');
-      if (container) {
-        // Create the iframe element
-        const iframe = document.createElement('iframe');
-        iframe.id = 'realscout-iframe';
-        iframe.width = '100%';
-        iframe.height = '600px';
-        iframe.style.border = 'none';
-        
-        // Construct the URL with agent ID and price parameters
-        const agentId = WIDGET_IDS.realScout.agentId;
-        const priceMin = WIDGET_IDS.realScout.priceMin;
-        iframe.src = `https://www.realscout.com/embed-search?agent_encoded_id=${agentId}&price_min=${priceMin}`;
-        
-        // Append the iframe to the container
-        container.appendChild(iframe);
-        
-        realScoutInitialized.current = true;
-      }
-    }
+    // Add RealScout script to a hidden container just to load it
+    // This keeps their tracking/analytics while we show our own UI
+    const script = document.createElement("script");
+    script.id = "realscout-script";
+    script.src = "https://js.realscout.com/target/target.js";
+    script.async = true;
+    script.dataset.agent = WIDGET_IDS.realScout.agentId;
+    document.body.appendChild(script);
     
     return () => {
-      // Clean up
-      const iframe = document.getElementById('realscout-iframe');
-      if (iframe) {
-        iframe.remove();
+      // Clean up script when component unmounts
+      const scriptEl = document.getElementById("realscout-script");
+      if (scriptEl) {
+        document.body.removeChild(scriptEl);
       }
-      realScoutInitialized.current = false;
     };
   }, []);
 
@@ -70,47 +114,37 @@ export default function PropertiesSection() {
   const applyFilters = () => {
     console.log("Applying filters:", filters);
     
-    // Get the iframe
-    const iframe = document.getElementById('realscout-iframe') as HTMLIFrameElement;
-    if (iframe) {
-      // Get the current URL
-      let currentSrc = new URL(iframe.src);
-      
-      // Update search parameters based on filters
-      if (filters.propertyType !== "all") {
-        currentSrc.searchParams.set('property_types', filters.propertyType);
-      } else {
-        currentSrc.searchParams.delete('property_types');
-      }
-      
-      // Handle price range
-      const [min, max] = filters.priceRange.split('-');
-      currentSrc.searchParams.set('price_min', min);
-      if (max && !max.includes('+')) {
-        currentSrc.searchParams.set('price_max', max);
-      } else {
-        currentSrc.searchParams.delete('price_max');
-      }
-      
-      // Handle bedrooms
-      if (filters.bedrooms !== "any") {
-        const bedroomCount = filters.bedrooms.replace('+', '');
-        currentSrc.searchParams.set('beds_min', bedroomCount);
-      } else {
-        currentSrc.searchParams.delete('beds_min');
-      }
-      
-      // Handle bathrooms
-      if (filters.bathrooms !== "any") {
-        const bathroomCount = filters.bathrooms.replace('+', '');
-        currentSrc.searchParams.set('baths_min', bathroomCount);
-      } else {
-        currentSrc.searchParams.delete('baths_min');
-      }
-      
-      // Update the iframe src
-      iframe.src = currentSrc.toString();
+    // Filter properties based on criteria
+    let filtered = [...mockProperties];
+    
+    // Filter by property type
+    if (filters.propertyType !== "all") {
+      filtered = filtered.filter(p => p.type === filters.propertyType);
     }
+    
+    // Filter by price range
+    const [minPrice, maxPrice] = filters.priceRange.split('-');
+    filtered = filtered.filter(p => {
+      if (maxPrice && !maxPrice.includes('+')) {
+        return p.price >= parseInt(minPrice) && p.price <= parseInt(maxPrice);
+      } else {
+        return p.price >= parseInt(minPrice);
+      }
+    });
+    
+    // Filter by bedrooms
+    if (filters.bedrooms !== "any") {
+      const minBedrooms = parseInt(filters.bedrooms);
+      filtered = filtered.filter(p => p.bedrooms >= minBedrooms);
+    }
+    
+    // Filter by bathrooms
+    if (filters.bathrooms !== "any") {
+      const minBathrooms = parseInt(filters.bathrooms);
+      filtered = filtered.filter(p => p.bathrooms >= minBathrooms);
+    }
+    
+    setFilteredProperties(filtered);
   };
 
   return (
@@ -199,15 +233,52 @@ export default function PropertiesSection() {
           </CardContent>
         </Card>
         
-        {/* RealScout Widget */}
+        {/* Property Listings Section */}
         <div className="bg-gray-100 border border-gray-300 rounded-lg p-6">
-          <h3 className="font-montserrat font-semibold text-xl mb-2 text-center">RealScout Property Listings</h3>
+          <h3 className="font-montserrat font-semibold text-xl mb-2 text-center">Featured Properties</h3>
           <p className="text-sm text-bhhs-dark mb-4 text-center">Browse luxury properties in Mountains Edge</p>
           
-          {/* RealScout Widget Integration using iframe */}
-          <div id="realscout-container" className="w-full min-h-[600px]">
-            {/* iframe will be inserted here dynamically */}
+          {/* Property Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProperties.map(property => (
+              <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <div className="relative">
+                  <img 
+                    src={property.image} 
+                    alt={property.address} 
+                    className="h-48 w-full object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
+                    <span className="text-white font-semibold text-xl">${property.price.toLocaleString()}</span>
+                  </div>
+                </div>
+                <CardContent className="p-4">
+                  <h4 className="font-montserrat font-semibold text-lg mb-2 text-bhhs-navy">{property.address}</h4>
+                  <div className="flex justify-between text-bhhs-dark mb-2">
+                    <span>{property.bedrooms} {property.bedrooms === 1 ? 'Bed' : 'Beds'}</span>
+                    <span>{property.bathrooms} {property.bathrooms === 1 ? 'Bath' : 'Baths'}</span>
+                    <span>{property.sqft.toLocaleString()} sqft</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-3">
+                    <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs uppercase">
+                      {property.type === 'single' ? 'Single Family' : 
+                       property.type === 'townhouse' ? 'Townhouse' : 'Multi-Family'}
+                    </span>
+                    <button className="text-bhhs-navy font-medium hover:underline">
+                      View Details
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
+          
+          {/* No results message */}
+          {filteredProperties.length === 0 && (
+            <div className="text-center py-10">
+              <p className="text-bhhs-dark">No properties match your search criteria. Please try different filters.</p>
+            </div>
+          )}
         </div>
         
         <div className="text-center mt-8">
@@ -215,7 +286,7 @@ export default function PropertiesSection() {
             href="#contact" 
             className="bg-accent text-white font-montserrat font-semibold px-6 py-3 rounded-lg hover:bg-opacity-90 transition inline-block"
           >
-            See All Available Properties
+            Contact Agent for More Properties
           </a>
         </div>
       </div>
