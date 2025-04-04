@@ -1,6 +1,15 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { WIDGET_IDS } from "@/lib/constants";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 type FilterOptions = {
   propertyType: string;
@@ -19,7 +28,9 @@ const mockProperties = [
     bathrooms: 3,
     sqft: 2750,
     type: "single",
-    image: "https://images.unsplash.com/photo-1592595896616-c37162298647?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+    image: "https://images.unsplash.com/photo-1592595896616-c37162298647?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+    description: "Beautiful single-family home in the desirable Mountains Edge community. This stunning property features 4 bedrooms, 3 bathrooms, and an open floor plan. Enjoy breathtaking mountain views, a spacious backyard with covered patio, and luxury finishes throughout. The chef's kitchen includes stainless steel appliances, granite countertops, and a large island.",
+    features: ["Gourmet Kitchen", "Mountain Views", "Two-car Garage", "Swimming Pool", "Smart Home System", "Energy Efficient"]
   },
   {
     id: 2,
@@ -29,7 +40,9 @@ const mockProperties = [
     bathrooms: 3.5,
     sqft: 3200,
     type: "single",
-    image: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+    image: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+    description: "Stunning 5-bedroom contemporary home in Mountains Edge with panoramic canyon views. This elegant residence offers a spacious open floor plan, gourmet kitchen with premium appliances, and a luxurious primary suite with spa-like bathroom. The expansive outdoor living area features a covered patio, built-in BBQ, and fire pit.",
+    features: ["Home Office", "Walk-in Closets", "Media Room", "Outdoor Kitchen", "Landscaped Garden", "Water Softener System"]
   },
   {
     id: 3,
@@ -39,7 +52,9 @@ const mockProperties = [
     bathrooms: 2,
     sqft: 2100,
     type: "townhouse",
-    image: "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+    image: "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+    description: "Charming townhome in the heart of Mountains Edge with desert and mountain views. This well-maintained property features an updated kitchen, spacious living areas, and a private patio. Community amenities include a pool, spa, and walking trails. Perfect for first-time buyers or downsizers looking for a low-maintenance lifestyle.",
+    features: ["Community Pool", "Updated Kitchen", "Private Patio", "Walking Trails", "Low HOA Fees", "Attached Garage"]
   },
   {
     id: 4,
@@ -49,7 +64,9 @@ const mockProperties = [
     bathrooms: 3.5,
     sqft: 3600,
     type: "single",
-    image: "https://images.unsplash.com/photo-1576941089067-2de3c901e126?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+    image: "https://images.unsplash.com/photo-1576941089067-2de3c901e126?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+    description: "Luxurious estate home in Mountains Edge with breathtaking sunset and mountain views. This impressive residence features soaring ceilings, designer finishes, and premium appliances. The backyard oasis includes a resort-style pool with waterfall, outdoor kitchen, and covered patio. Perfect for entertaining and luxury living.",
+    features: ["Resort-style Pool", "Wine Cellar", "Home Theater", "Designer Finishes", "3-car Garage", "Guest Suite"]
   },
   {
     id: 5,
@@ -59,7 +76,9 @@ const mockProperties = [
     bathrooms: 3,
     sqft: 3000,
     type: "single",
-    image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+    image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+    description: "Beautifully updated home in Mountains Edge with modern finishes and mountain views. This spacious property features a remodeled kitchen with quartz countertops, renovated bathrooms, and new flooring throughout. The private backyard includes a covered patio, built-in BBQ, and tranquil garden areas perfect for relaxation and entertaining.",
+    features: ["Quartz Countertops", "Renovated Bathrooms", "New Flooring", "Covered Patio", "Built-in BBQ", "Garden Areas"]
   },
   {
     id: 6,
@@ -69,9 +88,25 @@ const mockProperties = [
     bathrooms: 2.5,
     sqft: 2400,
     type: "townhouse",
-    image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+    image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+    description: "Stunning townhome in the prestigious Sierra Estates community of Mountains Edge. This move-in ready property features an open floor plan, upgraded kitchen with stainless steel appliances, and a spacious primary suite. Enjoy the community amenities including pool, spa, and fitness center, all within walking distance to parks and trails.",
+    features: ["Fitness Center Access", "Community Clubhouse", "Upgraded Kitchen", "Open Floor Plan", "Walk to Parks", "Gated Community"]
   }
 ];
+
+// Interface for Property type
+interface Property {
+  id: number;
+  address: string;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  sqft: number;
+  type: string;
+  image: string;
+  description?: string;
+  features?: string[];
+}
 
 export default function PropertiesSection() {
   const [filters, setFilters] = useState<FilterOptions>({
@@ -82,6 +117,8 @@ export default function PropertiesSection() {
   });
   
   const [filteredProperties, setFilteredProperties] = useState(mockProperties);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   
   // Load RealScout script on component mount
   useEffect(() => {
@@ -145,6 +182,17 @@ export default function PropertiesSection() {
     }
     
     setFilteredProperties(filtered);
+  };
+  
+  // Handle opening property details modal
+  const openPropertyDetails = (property: Property) => {
+    setSelectedProperty(property);
+    setDetailsOpen(true);
+  };
+  
+  // Handle closing property details modal
+  const closePropertyDetails = () => {
+    setDetailsOpen(false);
   };
 
   return (
@@ -264,7 +312,10 @@ export default function PropertiesSection() {
                       {property.type === 'single' ? 'Single Family' : 
                        property.type === 'townhouse' ? 'Townhouse' : 'Multi-Family'}
                     </span>
-                    <button className="text-bhhs-navy font-medium hover:underline">
+                    <button 
+                      onClick={() => openPropertyDetails(property)}
+                      className="text-bhhs-navy font-medium hover:underline"
+                    >
                       View Details
                     </button>
                   </div>
@@ -290,6 +341,77 @@ export default function PropertiesSection() {
           </a>
         </div>
       </div>
+      
+      {/* Property Details Dialog */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        {selectedProperty && (
+          <DialogContent className="sm:max-w-[800px] overflow-y-auto max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-montserrat text-bhhs-navy">
+                {selectedProperty.address}
+              </DialogTitle>
+              <DialogDescription className="text-xl font-semibold text-bhhs-gold">
+                ${selectedProperty.price.toLocaleString()}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <img 
+                  src={selectedProperty.image} 
+                  alt={selectedProperty.address} 
+                  className="w-full h-64 object-cover rounded-md mb-4"
+                />
+                <div className="flex justify-between text-bhhs-dark text-sm mb-4">
+                  <div className="flex flex-col items-center">
+                    <span className="font-semibold">{selectedProperty.bedrooms}</span>
+                    <span>Bedrooms</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-semibold">{selectedProperty.bathrooms}</span>
+                    <span>Bathrooms</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-semibold">{selectedProperty.sqft.toLocaleString()}</span>
+                    <span>Square Feet</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-montserrat font-semibold text-lg mb-2 text-bhhs-navy">Property Description</h4>
+                <p className="text-bhhs-dark mb-4">{selectedProperty.description}</p>
+                
+                <h4 className="font-montserrat font-semibold text-lg mb-2 text-bhhs-navy">Features</h4>
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {selectedProperty.features?.map((feature, index) => (
+                    <div key={index} className="flex items-center">
+                      <span className="w-2 h-2 bg-bhhs-gold rounded-full mr-2"></span>
+                      <span className="text-bhhs-dark">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="flex flex-col sm:flex-row justify-between gap-4 mt-6">
+              <Button variant="outline" onClick={closePropertyDetails}>
+                Close
+              </Button>
+              <Button 
+                className="bg-bhhs-navy hover:bg-opacity-90 text-white"
+                onClick={() => {
+                  closePropertyDetails();
+                  // Scroll to contact form
+                  document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Schedule a Viewing
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
     </section>
   );
 }
