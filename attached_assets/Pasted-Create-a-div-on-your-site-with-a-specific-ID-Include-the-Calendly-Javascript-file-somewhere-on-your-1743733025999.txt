@@ -1,0 +1,173 @@
+Create a div on your site with a specific ID. Include the Calendly Javascript file somewhere on your site as well:
+
+<script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js"></script>
+Then use this API call, making sure to replace the sample text with your div ID:
+
+Calendly.initInlineWidget({
+ url: 'https://calendly.com/YOURLINK',
+ parentElement: document.getElementById('SAMPLEdivID'),
+ prefill: {},
+ utm: {}
+});
+Load the inline embed automatically while still pre-filling questions, or while setting UTM parameters, use the following code:
+
+<!-- Calendly inline widget begin -->
+
+<div id="calendly-embed" style="min-width:320px;height:700px;"></div>
+
+<script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js"></script>
+
+<script>
+Calendly.initInlineWidget({
+url: 'https://calendly.com/YOURLINK',
+parentElement: document.getElementById('calendly-embed')
+});
+</script>
+
+<!-- Calendly inline widget end -->
+Make sure to include the parentElement, otherwise the embed will always load at the bottom of your web page.
+
+How to automatically resize the embed
+By default, the inline embed will be a fixed height and will contain a scrollbar within the embed itself if it exceeds the specified embed height. To change this from the default, you can set the embed to automatically resize.
+
+Note
+Only one embed per page can be automatically resized. Using more than one will resize both based on the most recently changed page, and will scroll to the top of the first embed. It is also advised not to use drop-downs on the booking/routing forms when using the resize functionality.
+
+To automatically resize the standard html embed code, data-resize="true" will need to be added as an attribute:
+
+<div class="calendly-inline-widget"
+data-url="http://calendly.com/YOUR-LINK"
+data-resize="true"
+style="min-width:320px;height:700px;">
+</div>
+To automatically resize the advanced inline embed code, pass resize: true as an option in the object passed to the initInlineWidget() function:
+
+Calendly.initInlineWidget({
+url: 'https://calendly.com/YOUR-LINK',
+parentElement: someElement,
+resize: true
+});
+Make sure to include the parentElement, otherwise the embed will always load at the bottom of your web page.
+
+How to hide event details
+Remove any information that is duplicated by the content of your web page by hiding the event details, such as your Calendly account picture, name, or event location. Add one of the following URL parameters to the code, depending on the type of scheduling link you are embedding:
+
+A profile page or team page link:
+
+?hide_landing_page_details=1
+
+An event type-specific link:
+
+?hide_event_type_details=1
+
+Note
+If you add both hide_landing_page_details=1 and hide_event_type_details=1, the event type description is still included on the landing page.
+
+How to hide the cookie banner
+A cookie banner will show by default within the frame of the page that Calendly loads. Without making any changes to your website, the banner keeps you compliant with privacy regulations worldwide (GDPR, CCPA, etc.) when users visit your page and interact with the Calendly widget. Calendly does provide the option for you to hide the cookie banner as a configurable property when embedding your Calendly booking page.
+
+However, by hiding the banner, your site takes responsibility in managing customer preferences to remain compliant with global privacy regulations. When Calendly is embedded, and the banner is hidden, Calendly will still use cookies. Therefore, our recommendation is to prevent Calendly from loading unless users have opted into performance cookies.
+
+How to hide the cookie banner on your existing embed code:
+
+If you've already embedded Calendly on your website, access your Calendly embed code from the HTML editor on your site.
+In your embed code, add the following parameter to your Calendly link: hide_gdpr_banner=1
+The final code will look something like this:
+
+<div class="calendly-inline-widget" data-url="https://calendly.com/YOUR_EVENT?hide_gdpr_banner=1" style="min-width:320px;height:630px;"></div><script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js"></script>
+How to hide the cookie banner when creating new embed code for your site:
+
+Follow the steps in Embedding Calendly on your site. Make sure to select Hide Cookie Banner before copying the code:
+
+Hide_cookie_banner_updated.png
+
+How to notify the parent window
+The embedded scheduling page notifies the parent window of important events during the booking flow. As a developer, you can subscribe to these notifications to fire analytics events or change the state of your app.
+
+We use window.postMessage() to post events to the parent window. The event payload is a JavaScript object of the following format where XXX is the name of the booking flow event:
+
+{ event: 'calendly.XXX' }
+Here are the events Calendly fires when an invitee follows the booking flow:
+
+Event name
+Event description
+calendly.profile_page_viewed	Profile page was viewed
+calendly.event_type_viewed	Event type page was viewed
+calendly.date_and_time_selected	Invitee selected date and time
+calendly.event_scheduled	Invitee successfully booked a meeting
+
+This example code listens to these events and logs them to the console:
+
+function isCalendlyEvent(e) {
+  return e.origin === "https://calendly.com" && e.data.event && e.data.event.indexOf("calendly.") === 0;
+};
+ 
+window.addEventListener("message", function(e) {
+  if(isCalendlyEvent(e)) {
+    /* Example to get the name of the event */
+    console.log("Event name:", e.data.event);
+    
+    /* Example to get the payload of the event */
+    console.log("Event details:", e.data.payload);
+  }
+});
+How to pre-fill invitee questions
+If you've already gathered information from visitors to your webpage, you can have it pre-populated in the booking form by modifying Javascript calls in the embed code. Prefill parameters are set in the following structure:
+
+prefill: {
+    name:
+    email:
+    customAnswers:
+}
+If your event type takes separate first name and last name fields you can use firstName and lastName instead of name.
+
+You can also set custom answers to invitee questions you've added to your event type. Each custom answer will be numbered in order as a1, a2, a3, and up to a10.
+
+prefill: {
+    customAnswers: {
+        a1:
+        a2:
+        a3:
+    }  
+}
+This example code will pre-populate John Doe's contact information and his answers to the invitee questions this event type is asking:
+
+<script>
+    Calendly.initInlineWidget({
+        url: 'https://calendly.com/YOUR_LINK/30min',
+        prefill: {
+            name: "John Doe",
+            email: "john@doe2.com",
+            customAnswers: {
+                a1: "Yes",
+                a2: "At the Starbucks on 3rd and 16th"
+            }
+        }         
+   });
+</script>
+ 
+
+Customizing your embed
+Tailor your embedded Calendly experience with customization options, including hiding event details and personalizing colors and button text.
+
+Hide event details
+You can hide event details across all embed types. This option removes your avatar, event type name, location, and event type details from the embedded view. It’s a helpful way to avoid displaying duplicate content already present on your website.
+
+Customize colors and button text
+For the pop-up widget embed, you can personalize colors and button text to match your website’s branding. Paid subscriptions unlock additional customization settings, such as:
+
+Background color
+Text color
+Button and link colors
+You can also edit the text shown for the pop-up text option to align with your preferred messaging. When you're done customizing the embed, copy the code and add it to your webpage.
+
+Note
+The Submit or Schedule Event button text color will automatically adjust to either black or white, depending on the button color setting, to meet accessibility standards and ensure readability.
+
+Embed example
+For example, you could use the following settings:
+
+Background color (background_color): #1A1A1A
+Text color (text_color): #FFFFFF
+Button & link color (primary_color): #FF0020
+Here’s how your embed would look with those color settings applied:
