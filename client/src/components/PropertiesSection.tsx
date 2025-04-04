@@ -1,5 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { WIDGET_IDS } from "@/lib/constants";
+
+declare global {
+  interface Window {
+    RealScout?: any;
+  }
+}
 
 type FilterOptions = {
   propertyType: string;
@@ -9,6 +16,7 @@ type FilterOptions = {
 };
 
 export default function PropertiesSection() {
+  const realScoutInitialized = useRef(false);
   const [filters, setFilters] = useState<FilterOptions>({
     propertyType: "all",
     priceRange: "500000-600000",
@@ -17,19 +25,37 @@ export default function PropertiesSection() {
   });
   
   useEffect(() => {
-    // Load RealScout widget script
-    const script = document.createElement("script");
-    script.id = "realscout-widget-script";
-    script.async = true;
-    script.src = "https://widgets.realscout.com/realscout-search-widget.js";
-    document.body.appendChild(script);
+    // Only initialize RealScout if not already done
+    if (!realScoutInitialized.current) {
+      // Create RealScout container element
+      const container = document.getElementById('realscout-container');
+      if (container) {
+        // Create the iframe element
+        const iframe = document.createElement('iframe');
+        iframe.id = 'realscout-iframe';
+        iframe.width = '100%';
+        iframe.height = '600px';
+        iframe.style.border = 'none';
+        
+        // Construct the URL with agent ID and price parameters
+        const agentId = WIDGET_IDS.realScout.agentId;
+        const priceMin = WIDGET_IDS.realScout.priceMin;
+        iframe.src = `https://www.realscout.com/embed-search?agent_encoded_id=${agentId}&price_min=${priceMin}`;
+        
+        // Append the iframe to the container
+        container.appendChild(iframe);
+        
+        realScoutInitialized.current = true;
+      }
+    }
     
     return () => {
-      // Clean up script on unmount
-      const existingScript = document.getElementById("realscout-widget-script");
-      if (existingScript) {
-        document.body.removeChild(existingScript);
+      // Clean up
+      const iframe = document.getElementById('realscout-iframe');
+      if (iframe) {
+        iframe.remove();
       }
+      realScoutInitialized.current = false;
     };
   }, []);
 
@@ -42,37 +68,48 @@ export default function PropertiesSection() {
   };
 
   const applyFilters = () => {
-    // In a real implementation, we would use these filters with the RealScout API
     console.log("Applying filters:", filters);
     
-    // Reset and reload RealScout widget with new filters
-    const existingWidget = document.getElementById("rs-search-widget");
-    if (existingWidget) {
-      existingWidget.innerHTML = "";
+    // Get the iframe
+    const iframe = document.getElementById('realscout-iframe') as HTMLIFrameElement;
+    if (iframe) {
+      // Get the current URL
+      let currentSrc = new URL(iframe.src);
       
-      // Re-initialize widget with new filters
-      const widget = document.createElement("div");
-      widget.className = "rs-search";
-      widget.dataset.agentEncodedId = "QWdlbnQtMjI1MDUw";
-      widget.dataset.priceMin = "500000";
-      
+      // Update search parameters based on filters
       if (filters.propertyType !== "all") {
-        widget.dataset.propertyTypes = filters.propertyType;
+        currentSrc.searchParams.set('property_types', filters.propertyType);
+      } else {
+        currentSrc.searchParams.delete('property_types');
       }
       
-      existingWidget.appendChild(widget);
-      
-      // Reload RealScout script
-      const existingScript = document.getElementById("realscout-widget-script");
-      if (existingScript) {
-        document.body.removeChild(existingScript);
+      // Handle price range
+      const [min, max] = filters.priceRange.split('-');
+      currentSrc.searchParams.set('price_min', min);
+      if (max && !max.includes('+')) {
+        currentSrc.searchParams.set('price_max', max);
+      } else {
+        currentSrc.searchParams.delete('price_max');
       }
       
-      const script = document.createElement("script");
-      script.id = "realscout-widget-script";
-      script.async = true;
-      script.src = "https://widgets.realscout.com/realscout-search-widget.js";
-      document.body.appendChild(script);
+      // Handle bedrooms
+      if (filters.bedrooms !== "any") {
+        const bedroomCount = filters.bedrooms.replace('+', '');
+        currentSrc.searchParams.set('beds_min', bedroomCount);
+      } else {
+        currentSrc.searchParams.delete('beds_min');
+      }
+      
+      // Handle bathrooms
+      if (filters.bathrooms !== "any") {
+        const bathroomCount = filters.bathrooms.replace('+', '');
+        currentSrc.searchParams.set('baths_min', bathroomCount);
+      } else {
+        currentSrc.searchParams.delete('baths_min');
+      }
+      
+      // Update the iframe src
+      iframe.src = currentSrc.toString();
     }
   };
 
@@ -167,12 +204,9 @@ export default function PropertiesSection() {
           <h3 className="font-montserrat font-semibold text-xl mb-2 text-center">RealScout Property Listings</h3>
           <p className="text-sm text-bhhs-dark mb-4 text-center">Browse luxury properties in Mountains Edge</p>
           
-          {/* RealScout Widget Integration */}
-          <div id="rs-search-widget" className="min-h-[400px]">
-            <div className="rs-search" 
-              data-agent-encoded-id="QWdlbnQtMjI1MDUw" 
-              data-price-min="500000">
-            </div>
+          {/* RealScout Widget Integration using iframe */}
+          <div id="realscout-container" className="w-full min-h-[600px]">
+            {/* iframe will be inserted here dynamically */}
           </div>
         </div>
         
