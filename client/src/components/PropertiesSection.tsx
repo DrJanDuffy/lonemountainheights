@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { WIDGET_IDS } from "@/lib/constants";
 import { 
@@ -10,6 +10,23 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Home, 
+  DollarSign, 
+  Bed, 
+  Bath, 
+  Square, 
+  Search, 
+  Calendar, 
+  MapPin, 
+  Star, 
+  ChevronLeft, 
+  ChevronRight, 
+  ChevronUp,
+  ChevronDown,
+  X 
+} from "lucide-react";
 
 type FilterOptions = {
   propertyType: string;
@@ -195,152 +212,413 @@ export default function PropertiesSection() {
     setDetailsOpen(false);
   };
 
+  // Add animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.6 }
+    }
+  };
+  
+  // Track current visible property for mobile view
+  const [activeMobileProperty, setActiveMobileProperty] = useState(0);
+  const propertiesContainerRef = useRef<HTMLDivElement>(null);
+
+  const nextProperty = () => {
+    if (filteredProperties.length > 0) {
+      setActiveMobileProperty(prev => 
+        prev === filteredProperties.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const prevProperty = () => {
+    if (filteredProperties.length > 0) {
+      setActiveMobileProperty(prev => 
+        prev === 0 ? filteredProperties.length - 1 : prev - 1
+      );
+    }
+  };
+
+  // Handle filter animation
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+  
   return (
-    <section id="properties" className="py-16 px-4 bg-white">
-      <div className="container mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-montserrat font-bold text-bhhs-navy mb-3">Featured Properties</h2>
-          <p className="text-bhhs-dark max-w-2xl mx-auto">Discover luxury homes in Mountains Edge starting at $500,000</p>
-        </div>
+    <section id="properties" className="py-24 px-4 bg-gradient-to-b from-white to-gray-50">
+      <motion.div 
+        className="container mx-auto"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-3xl md:text-5xl font-montserrat font-bold text-bhhs-navy mb-4">Featured Properties</h2>
+          <p className="text-bhhs-dark text-lg max-w-2xl mx-auto">Discover luxury homes in Mountains Edge with exceptional features and prime locations</p>
+        </motion.div>
         
-        {/* Filter Section */}
-        <Card className="mb-8">
-          <CardContent className="pt-6">
-            <h3 className="font-montserrat font-semibold text-xl mb-4">Filter Properties</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-bhhs-dark mb-1">Property Type</label>
-                <select 
-                  name="propertyType"
-                  value={filters.propertyType}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-bhhs-navy"
-                >
-                  <option value="all">All Types</option>
-                  <option value="single">Single Family Homes</option>
-                  <option value="townhouse">Townhouses</option>
-                  <option value="multi">Multi-Family</option>
-                </select>
+        {/* Filter Section - Enhanced with animation */}
+        <motion.div 
+          className={`bg-white rounded-xl shadow-md mb-12 overflow-hidden transition-all duration-300 border border-gray-100`}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          viewport={{ once: true }}
+        >
+          <div className="p-6 pb-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 bg-bhhs-navy/10 rounded-full flex items-center justify-center">
+                  <Search className="h-5 w-5 text-bhhs-navy" />
+                </div>
+                <h3 className="font-montserrat font-semibold text-xl text-bhhs-navy">Find Your Dream Home</h3>
               </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-bhhs-dark mb-1">Price Range</label>
-                <select 
-                  name="priceRange"
-                  value={filters.priceRange}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-bhhs-navy"
-                >
-                  <option value="500000-600000">$500,000 - $600,000</option>
-                  <option value="600000-700000">$600,000 - $700,000</option>
-                  <option value="700000-800000">$700,000 - $800,000</option>
-                  <option value="800000+">$800,000+</option>
-                </select>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-bhhs-dark mb-1">Bedrooms</label>
-                <select 
-                  name="bedrooms"
-                  value={filters.bedrooms}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-bhhs-navy"
-                >
-                  <option value="any">Any</option>
-                  <option value="2+">2+</option>
-                  <option value="3+">3+</option>
-                  <option value="4+">4+</option>
-                  <option value="5+">5+</option>
-                </select>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-bhhs-dark mb-1">Bathrooms</label>
-                <select 
-                  name="bathrooms"
-                  value={filters.bathrooms}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-bhhs-navy"
-                >
-                  <option value="any">Any</option>
-                  <option value="2+">2+</option>
-                  <option value="3+">3+</option>
-                  <option value="4+">4+</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="flex justify-center mt-2">
               <button 
-                onClick={applyFilters}
-                className="bg-bhhs-navy text-white font-montserrat px-6 py-2 rounded hover:bg-opacity-90 transition"
+                onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                className="text-bhhs-navy flex items-center gap-1 text-sm font-medium hover:text-accent transition-colors"
               >
-                Apply Filters
+                {isFilterExpanded ? "Hide Filters" : "Show All Filters"}
+                {isFilterExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
             </div>
-          </CardContent>
-        </Card>
-        
-        {/* Property Listings Section */}
-        <div className="bg-gray-100 border border-gray-300 rounded-lg p-6">
-          <h3 className="font-montserrat font-semibold text-xl mb-2 text-center">Featured Properties</h3>
-          <p className="text-sm text-bhhs-dark mb-4 text-center">Browse luxury properties in Mountains Edge</p>
-          
-          {/* Property Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProperties.map(property => (
-              <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                <div className="relative">
-                  <img 
-                    src={property.image} 
-                    alt={property.address} 
-                    className="h-48 w-full object-cover"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
-                    <span className="text-white font-semibold text-xl">${property.price.toLocaleString()}</span>
-                  </div>
-                </div>
-                <CardContent className="p-4">
-                  <h4 className="font-montserrat font-semibold text-lg mb-2 text-bhhs-navy">{property.address}</h4>
-                  <div className="flex justify-between text-bhhs-dark mb-2">
-                    <span>{property.bedrooms} {property.bedrooms === 1 ? 'Bed' : 'Beds'}</span>
-                    <span>{property.bathrooms} {property.bathrooms === 1 ? 'Bath' : 'Baths'}</span>
-                    <span>{property.sqft.toLocaleString()} sqft</span>
-                  </div>
-                  <div className="flex justify-between items-center mt-3">
-                    <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs uppercase">
-                      {property.type === 'single' ? 'Single Family' : 
-                       property.type === 'townhouse' ? 'Townhouse' : 'Multi-Family'}
-                    </span>
-                    <button 
-                      onClick={() => openPropertyDetails(property)}
-                      className="text-bhhs-navy font-medium hover:underline"
-                    >
-                      View Details
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
           </div>
           
-          {/* No results message */}
-          {filteredProperties.length === 0 && (
-            <div className="text-center py-10">
-              <p className="text-bhhs-dark">No properties match your search criteria. Please try different filters.</p>
+          <AnimatePresence>
+            {isFilterExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div className="px-6 pb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Home className="h-4 w-4 text-bhhs-navy" />
+                        <label className="block text-sm font-medium text-bhhs-navy">Property Type</label>
+                      </div>
+                      <select 
+                        name="propertyType"
+                        value={filters.propertyType}
+                        onChange={handleFilterChange}
+                        className="w-full p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bhhs-navy text-sm"
+                      >
+                        <option value="all">All Types</option>
+                        <option value="single">Single Family Homes</option>
+                        <option value="townhouse">Townhouses</option>
+                        <option value="multi">Multi-Family</option>
+                      </select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-bhhs-navy" />
+                        <label className="block text-sm font-medium text-bhhs-navy">Price Range</label>
+                      </div>
+                      <select 
+                        name="priceRange"
+                        value={filters.priceRange}
+                        onChange={handleFilterChange}
+                        className="w-full p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bhhs-navy text-sm"
+                      >
+                        <option value="500000-600000">$500,000 - $600,000</option>
+                        <option value="600000-700000">$600,000 - $700,000</option>
+                        <option value="700000-800000">$700,000 - $800,000</option>
+                        <option value="800000+">$800,000+</option>
+                      </select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Bed className="h-4 w-4 text-bhhs-navy" />
+                        <label className="block text-sm font-medium text-bhhs-navy">Bedrooms</label>
+                      </div>
+                      <select 
+                        name="bedrooms"
+                        value={filters.bedrooms}
+                        onChange={handleFilterChange}
+                        className="w-full p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bhhs-navy text-sm"
+                      >
+                        <option value="any">Any</option>
+                        <option value="2+">2+</option>
+                        <option value="3+">3+</option>
+                        <option value="4+">4+</option>
+                        <option value="5+">5+</option>
+                      </select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Bath className="h-4 w-4 text-bhhs-navy" />
+                        <label className="block text-sm font-medium text-bhhs-navy">Bathrooms</label>
+                      </div>
+                      <select 
+                        name="bathrooms"
+                        value={filters.bathrooms}
+                        onChange={handleFilterChange}
+                        className="w-full p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bhhs-navy text-sm"
+                      >
+                        <option value="any">Any</option>
+                        <option value="2+">2+</option>
+                        <option value="3+">3+</option>
+                        <option value="4+">4+</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+            <div className="flex flex-wrap justify-between items-center gap-4">
+              <div className="text-sm text-gray-500">
+                <span className="font-medium">{filteredProperties.length}</span> properties found
+              </div>
+              
+              <Button 
+                onClick={applyFilters}
+                className="bg-bhhs-navy hover:bg-bhhs-navy/90 text-white font-medium px-6 py-2.5 rounded-lg transition-colors duration-300 flex items-center gap-2"
+              >
+                <Search className="h-4 w-4" />
+                Apply Filters
+              </Button>
             </div>
-          )}
+          </div>
+        </motion.div>
+        
+        {/* Property Listings Section */}
+        <div>
+          {/* Mobile Property Carousel (visible on small screens) */}
+          <div className="lg:hidden mb-8 relative">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
+              <button 
+                onClick={prevProperty}
+                className="bg-white rounded-full p-2 shadow-md hover:bg-gray-50 transition"
+                aria-label="Previous property"
+                disabled={filteredProperties.length === 0}
+              >
+                <ChevronLeft className="h-5 w-5 text-bhhs-navy" />
+              </button>
+            </div>
+            
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10">
+              <button 
+                onClick={nextProperty}
+                className="bg-white rounded-full p-2 shadow-md hover:bg-gray-50 transition"
+                aria-label="Next property"
+                disabled={filteredProperties.length === 0}
+              >
+                <ChevronRight className="h-5 w-5 text-bhhs-navy" />
+              </button>
+            </div>
+            
+            <div className="overflow-hidden px-10">
+              <AnimatePresence mode="wait">
+                {filteredProperties.length > 0 ? (
+                  <motion.div
+                    key={`mobile-property-${activeMobileProperty}`}
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -50 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Card className="overflow-hidden shadow-lg border border-gray-100">
+                      <div className="relative">
+                        <img 
+                          src={filteredProperties[activeMobileProperty].image} 
+                          alt={filteredProperties[activeMobileProperty].address} 
+                          className="h-60 w-full object-cover"
+                        />
+                        <div className="absolute top-0 right-0 m-3">
+                          <div className="bg-bhhs-navy text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                            ${filteredProperties[activeMobileProperty].price.toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                          <h4 className="font-montserrat font-semibold text-lg text-white">{filteredProperties[activeMobileProperty].address}</h4>
+                        </div>
+                      </div>
+                      <CardContent className="p-4">
+                        <div className="grid grid-cols-3 gap-2 mb-4">
+                          <div className="flex items-center gap-2">
+                            <Bed className="h-4 w-4 text-bhhs-navy" />
+                            <span className="text-bhhs-dark">{filteredProperties[activeMobileProperty].bedrooms} {filteredProperties[activeMobileProperty].bedrooms === 1 ? 'Bed' : 'Beds'}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Bath className="h-4 w-4 text-bhhs-navy" />
+                            <span className="text-bhhs-dark">{filteredProperties[activeMobileProperty].bathrooms} {filteredProperties[activeMobileProperty].bathrooms === 1 ? 'Bath' : 'Baths'}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Square className="h-4 w-4 text-bhhs-navy" />
+                            <span className="text-bhhs-dark">{filteredProperties[activeMobileProperty].sqft.toLocaleString()} sqft</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="bg-gray-100 text-bhhs-navy px-3 py-1 rounded-full text-xs font-medium">
+                            {filteredProperties[activeMobileProperty].type === 'single' ? 'Single Family' : 
+                             filteredProperties[activeMobileProperty].type === 'townhouse' ? 'Townhouse' : 'Multi-Family'}
+                          </span>
+                          <Button 
+                            onClick={() => openPropertyDetails(filteredProperties[activeMobileProperty])}
+                            className="bg-accent hover:bg-accent/90 text-white text-sm px-4 py-2 rounded-lg"
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ) : (
+                  <div className="text-center py-10">
+                    <p className="text-bhhs-dark">No properties match your search criteria. Please try different filters.</p>
+                  </div>
+                )}
+              </AnimatePresence>
+              
+              {/* Pagination dots */}
+              {filteredProperties.length > 1 && (
+                <div className="flex justify-center gap-1 mt-4">
+                  {filteredProperties.map((_, index) => (
+                    <button 
+                      key={index}
+                      className={`h-2 rounded-full transition-all ${
+                        index === activeMobileProperty 
+                          ? 'w-6 bg-bhhs-navy' 
+                          : 'w-2 bg-gray-300'
+                      }`}
+                      onClick={() => setActiveMobileProperty(index)}
+                      aria-label={`Go to property ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Desktop Property Grid (visible on large screens) */}
+          <motion.div 
+            className="hidden lg:block"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+            ref={propertiesContainerRef}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredProperties.map((property, index) => (
+                <motion.div 
+                  key={property.id} 
+                  variants={itemVariants}
+                  whileHover={{ y: -5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Card className="overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 border border-gray-100">
+                    <div className="relative">
+                      <img 
+                        src={property.image} 
+                        alt={property.address} 
+                        className="h-56 w-full object-cover"
+                      />
+                      <div className="absolute top-0 right-0 m-3">
+                        <div className="bg-bhhs-navy text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                          ${property.price.toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                        <h4 className="font-montserrat font-semibold text-lg text-white leading-tight">{property.address}</h4>
+                      </div>
+                    </div>
+                    <CardContent className="p-5">
+                      <div className="grid grid-cols-3 gap-2 mb-4">
+                        <div className="flex items-center gap-2">
+                          <Bed className="h-4 w-4 text-bhhs-navy" />
+                          <span className="text-bhhs-dark text-sm">{property.bedrooms} {property.bedrooms === 1 ? 'Bed' : 'Beds'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Bath className="h-4 w-4 text-bhhs-navy" />
+                          <span className="text-bhhs-dark text-sm">{property.bathrooms} {property.bathrooms === 1 ? 'Bath' : 'Baths'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Square className="h-4 w-4 text-bhhs-navy" />
+                          <span className="text-bhhs-dark text-sm">{property.sqft.toLocaleString()} sqft</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="bg-gray-100 text-bhhs-navy px-3 py-1 rounded-full text-xs font-medium">
+                          {property.type === 'single' ? 'Single Family' : 
+                           property.type === 'townhouse' ? 'Townhouse' : 'Multi-Family'}
+                        </span>
+                        <Button 
+                          onClick={() => openPropertyDetails(property)}
+                          className="bg-accent hover:bg-accent/90 text-white text-sm px-4 py-2 rounded-lg"
+                        >
+                          View Details
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+            
+            {/* No results message */}
+            {filteredProperties.length === 0 && (
+              <motion.div 
+                className="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-100"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-bhhs-navy mb-2">No Results Found</h3>
+                <p className="text-bhhs-dark">We couldn't find any properties matching your criteria.</p>
+                <p className="text-bhhs-dark mt-1">Try adjusting your filters for more results.</p>
+              </motion.div>
+            )}
+          </motion.div>
         </div>
         
-        <div className="text-center mt-8">
+        <motion.div 
+          className="text-center mt-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          viewport={{ once: true }}
+        >
           <a 
             href="#contact" 
-            className="bg-accent text-white font-montserrat font-semibold px-6 py-3 rounded-lg hover:bg-opacity-90 transition inline-block"
+            className="bg-bhhs-navy text-white font-montserrat font-semibold px-8 py-3 rounded-lg hover:bg-bhhs-navy/90 shadow-lg transition-all duration-300 inline-flex items-center gap-2"
           >
-            Contact Agent for More Properties
+            <Calendar className="h-5 w-5" />
+            Schedule a Property Tour
           </a>
-        </div>
-      </div>
+          
+          <p className="text-gray-500 mt-4 text-sm">
+            Don't see what you're looking for? Contact Dr. Jan Duffy for access to additional properties.
+          </p>
+        </motion.div>
+      </motion.div>
       
       {/* Property Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
