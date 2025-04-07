@@ -1,6 +1,12 @@
 import { useEffect } from "react";
 import LeadForm from "./LeadForm";
 
+declare global {
+  interface Window {
+    Calendly?: any;
+  }
+}
+
 export default function ContactSchedule() {
   useEffect(() => {
     // Load Calendly widget script
@@ -17,20 +23,51 @@ export default function ContactSchedule() {
           url: 'https://calendly.com/janduffy/property-consultation',
           parentElement: document.getElementById('calendly-embed'),
           prefill: {},
-          utm: {}
+          utm: {},
+          resize: true, // Enable automatic resizing
+          hideEventTypeDetails: true, // Hide redundant information
+          hideGdprBanner: true // Hide cookie banner since we're managing it site-wide
         });
       }
     };
     
+    // Set up event listener for Calendly events
+    const handleCalendlyEvent = (e: MessageEvent) => {
+      if (isCalendlyEvent(e)) {
+        console.log("Calendly event detected:", e.data.event);
+        
+        // Track successful scheduling events
+        if (e.data.event === 'calendly.event_scheduled') {
+          console.log("Appointment scheduled successfully!");
+          // You could add analytics tracking here
+        }
+      }
+    };
+    
+    window.addEventListener("message", handleCalendlyEvent);
+    
     return () => {
-      // Clean up script on unmount
-      document.body.removeChild(script);
+      // Remove event listener on unmount
+      window.removeEventListener("message", handleCalendlyEvent);
+      
+      // Clean up script if it exists
+      const existingScript = document.querySelector('script[src="https://assets.calendly.com/assets/external/widget.js"]');
+      if (existingScript && existingScript.parentNode) {
+        existingScript.parentNode.removeChild(existingScript);
+      }
       
       // Remove any Calendly-related elements that might have been added
       const calendlyElements = document.querySelectorAll('[data-calendly]');
       calendlyElements.forEach(el => el.remove());
     };
   }, []);
+  
+  // Helper function to check if an event is from Calendly
+  const isCalendlyEvent = (e: MessageEvent) => {
+    return e.origin === "https://calendly.com" && 
+           e.data.event && 
+           e.data.event.indexOf("calendly.") === 0;
+  };
 
   return (
     <section id="contact" className="py-16 px-4 bg-white">
@@ -49,8 +86,12 @@ export default function ContactSchedule() {
           
           {/* Calendly Widget */}
           <div className="bg-bhhs-light rounded-lg shadow-md p-6">
-            <h3 className="font-montserrat font-semibold text-2xl text-bhhs-navy mb-4">Schedule an Appointment</h3>
-            <div id="calendly-embed" style={{ minWidth: "320px", height: "600px" }}></div>
+            <h3 className="font-montserrat font-semibold text-2xl text-bhhs-navy mb-4">Schedule a Property Consultation</h3>
+            <div 
+              id="calendly-embed" 
+              style={{ minWidth: "320px", height: "630px" }}
+              className="rounded overflow-hidden"
+            ></div>
           </div>
         </div>
       </div>

@@ -28,6 +28,34 @@ This project uses:
 - Shadcn UI component library
 - Drizzle ORM for database operations
 
+## Deployment
+
+This project can be deployed using Vercel, Replit, or any platform that supports Node.js applications.
+
+### Deploying with Vercel
+
+1. Fork or clone this repository to your GitHub account
+2. Connect your GitHub repository to Vercel
+3. Configure the following settings:
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+   - Install Command: `npm install`
+4. Add the required environment variables
+
+The included `vercel.json` file contains the necessary configuration for routing both the frontend and backend appropriately.
+
+### Deploying with Replit
+
+1. Create a new Replit from this GitHub repository
+2. Ensure you have the correct environment variables set up
+3. Use the "Run" button to start the application
+
+### Environment Variables
+
+The following environment variables are required for deployment:
+
+- DATABASE_URL: PostgreSQL connection string
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
